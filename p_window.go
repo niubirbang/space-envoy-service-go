@@ -41,7 +41,6 @@ func (m *Manager) install() error {
 			`Start-Process "cmd.exe" -ArgumentList '/c %s' -Verb RunAs -WindowStyle Hidden`,
 			shell,
 		)
-		fmt.Println(script)
 		cmd := exec.Command("powershell", "-Command", script)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
@@ -72,7 +71,6 @@ func (m *Manager) uninstall() error {
 			`Start-Process "cmd.exe" -ArgumentList '/c %s' -Verb RunAs -WindowStyle Hidden`,
 			shell,
 		)
-		fmt.Println(script)
 		cmd := exec.Command("powershell", "-Command", script)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
