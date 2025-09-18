@@ -3,15 +3,15 @@ package examples
 import (
 	"testing"
 
-	ses "github.com/niubirbang/space-envoy-service-go"
+	service "github.com/niubirbang/space-envoy-service-go"
 )
 
 func TestVersion(t *testing.T) {
-	ses.SetServiceFile("/Users/mac/go/src/github.com/niubirbang/space-envoy-service/space-envoy")
-	if err := ses.Check(); err != nil {
+	m := service.NewManager(serviceName, serviceFile)
+	if err := m.Init(); err != nil {
 		t.Fatal(err)
 	}
-	version, err := ses.Version()
+	version, err := m.Version()
 	if err != nil {
 		t.Fatal(err)
 	}

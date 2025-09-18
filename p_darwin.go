@@ -1,6 +1,6 @@
 //go:build darwin
 
-package ses
+package service
 
 import (
 	"context"
@@ -14,20 +14,20 @@ import (
 	"time"
 )
 
-func buildClient() *http.Client {
+func (m *Manager) initClient() {
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", name)))
+			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", m.serviceName)))
 		},
 	}
-	return &http.Client{
+	m.client = &http.Client{
 		Transport: transport,
 		Timeout:   30 * time.Second,
 	}
 }
 
-func Install() error {
-	quotedPath := fmt.Sprintf(`"%s"`, serviceFile)
+func (m *Manager) install() error {
+	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	shell := strings.Join(
 		[]string{
 			fmt.Sprintf(`chmod +x %s`, quotedPath),
@@ -39,7 +39,7 @@ func Install() error {
 	script := fmt.Sprintf(
 		`do shell script "%s" with prompt "Kernel %s requires authorization to use" with administrator privileges`,
 		strings.ReplaceAll(shell, `"`, `\"`),
-		name,
+		m.serviceName,
 	)
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
@@ -49,7 +49,7 @@ func Install() error {
 	var ok bool
 	for i := 0; i < 60; i++ {
 		time.Sleep(500 * time.Millisecond)
-		if _, err := Version(); err == nil {
+		if err := m.checkService(); err == nil {
 			ok = true
 			break
 		}
@@ -60,8 +60,8 @@ func Install() error {
 	return nil
 }
 
-func Uninstall() error {
-	quotedPath := fmt.Sprintf(`"%s"`, serviceFile)
+func (m *Manager) uninstall() error {
+	quotedPath := fmt.Sprintf(`"%s"`, m.serviceName)
 	shell := strings.Join(
 		[]string{
 			fmt.Sprintf(`chmod +x %s`, quotedPath),
@@ -72,7 +72,7 @@ func Uninstall() error {
 	script := fmt.Sprintf(
 		`do shell script "%s" with prompt "Kernel %s requires authorization to use" with administrator privileges`,
 		strings.ReplaceAll(shell, `"`, `\"`),
-		name,
+		m.serviceName,
 	)
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()

@@ -1,6 +1,6 @@
 //go:build linux
 
-package ses
+package service
 
 import (
 	"context"
@@ -11,23 +11,22 @@ import (
 	"time"
 )
 
-func buildClient() *http.Client {
+func (m *Manager) initClient() {
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", name)))
+			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", m.serviceName)))
 		},
 	}
-	return &http.Client{
+	m.client = &http.Client{
 		Transport: transport,
 		Timeout:   30 * time.Second,
 	}
 }
 
-func Install() error {
-
+func (m *Manager) install() error {
 	return nil
 }
 
-func Uninstall() error {
+func (m *Manager) uninstall() error {
 	return nil
 }

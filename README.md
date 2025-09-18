@@ -1,1 +1,0 @@
-# space-envoy-service-go
