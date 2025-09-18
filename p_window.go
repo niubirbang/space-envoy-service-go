@@ -57,18 +57,7 @@ func (m *Manager) install() error {
 			return fmt.Errorf("failed to install: %v\n%s", err, string(output))
 		}
 	}
-	var ok bool
-	for i := 0; i < 60; i++ {
-		time.Sleep(500 * time.Millisecond)
-		if m.isRunning() {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return errors.New("service failed to start")
-	}
-	return nil
+	return m.installAfterCheck()
 }
 
 func (m *Manager) uninstall() error {
