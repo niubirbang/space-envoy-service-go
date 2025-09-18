@@ -55,7 +55,7 @@ func (m *Manager) install() error {
 		}
 	}
 	if !ok {
-		return errors.New("socket failed")
+		return errors.New("service failed to start")
 	}
 	return nil
 }
@@ -76,7 +76,7 @@ func (m *Manager) uninstall() error {
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to install: %v\n%s", err, string(output))
+		return fmt.Errorf("failed to uninstall: %v\n%s", err, string(output))
 	}
 	return nil
 }
