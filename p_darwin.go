@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -24,6 +25,20 @@ func (m *Manager) initClient() {
 		Transport: transport,
 		Timeout:   30 * time.Second,
 	}
+}
+
+func (m *Manager) isRunning() bool {
+	cmd := exec.Command("launchctl", "print", fmt.Sprintf("system/%s", m.serviceName))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+	re := regexp.MustCompile(`pid = (\d+)`)
+	matches := re.FindStringSubmatch(string(output))
+	if len(matches) < 2 {
+		return false
+	}
+	return matches[1] != "0"
 }
 
 func (m *Manager) install() error {
@@ -49,7 +64,7 @@ func (m *Manager) install() error {
 	var ok bool
 	for i := 0; i < 60; i++ {
 		time.Sleep(500 * time.Millisecond)
-		if err := m.checkService(); err == nil {
+		if m.isRunning() {
 			ok = true
 			break
 		}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/natefinch/npipe"
@@ -31,6 +32,15 @@ func (m *Manager) initClient() {
 	}
 }
 
+func (m *Manager) isRunning() bool {
+	cmd := exec.Command("sc", "query", m.serviceName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(output)), "running")
+}
+
 func (m *Manager) install() error {
 	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	for _, shell := range []string{
@@ -50,7 +60,7 @@ func (m *Manager) install() error {
 	var ok bool
 	for i := 0; i < 60; i++ {
 		time.Sleep(500 * time.Millisecond)
-		if err := m.checkService(); err == nil {
+		if m.isRunning() {
 			ok = true
 			break
 		}

@@ -23,6 +23,10 @@ func (m *Manager) initClient() {
 	}
 }
 
+func (m *Manager) isRunning() bool {
+	return false
+}
+
 func (m *Manager) install() error {
 	return nil
 }

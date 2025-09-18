@@ -43,11 +43,6 @@ func (m *Manager) request(
 	return nil, errors.New(string(body))
 }
 
-func (m *Manager) checkService() error {
-	_, err := m.request(http.MethodGet, "/version", nil, nil)
-	return err
-}
-
 func (m *Manager) checkUninit() error {
 	if !m.inited {
 		return errors.New("uninit")

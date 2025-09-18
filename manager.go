@@ -54,7 +54,7 @@ func (m *Manager) Init() error {
 	if m.inited {
 		return nil
 	}
-	if err := m.checkService(); err != nil {
+	if !m.isRunning() {
 		if err := m.install(); err != nil {
 			return err
 		}
