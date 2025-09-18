@@ -42,6 +42,7 @@ func (m *Manager) isRunning() bool {
 }
 
 func (m *Manager) install() error {
+	fmt.Println("installing")
 	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	for _, shell := range []string{
 		fmt.Sprintf(`%s install`, quotedPath),
@@ -61,6 +62,7 @@ func (m *Manager) install() error {
 }
 
 func (m *Manager) uninstall() error {
+	fmt.Println("uninstalling")
 	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	for _, shell := range []string{
 		fmt.Sprintf(`%s stop`, quotedPath),
