@@ -37,11 +37,9 @@ func NewManager(serviceName, serviceFile string) *Manager {
 	if serviceFile == "" {
 		serviceFile = path.Join(currentDir, "space-envoy")
 	}
-
 	if !filepath.IsAbs(serviceFile) {
 		serviceFile = filepath.Join(currentDir, serviceFile)
 	}
-
 	m := &Manager{
 		serviceName: serviceName,
 		serviceFile: serviceFile,

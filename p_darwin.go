@@ -61,10 +61,9 @@ func (m *Manager) install() error {
 }
 
 func (m *Manager) uninstall() error {
-	quotedPath := fmt.Sprintf(`"%s"`, m.serviceName)
+	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	shell := strings.Join(
 		[]string{
-			fmt.Sprintf(`chmod +x %s`, quotedPath),
 			fmt.Sprintf(`%s uninstall`, quotedPath),
 		},
 		"\n",
