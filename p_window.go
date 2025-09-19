@@ -46,7 +46,7 @@ func (m *Manager) install() error {
 	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	for _, shell := range []string{
 		fmt.Sprintf(`%s install`, quotedPath),
-		fmt.Sprintf(`%s start`, quotedPath),
+		// fmt.Sprintf(`%s start`, quotedPath),
 	} {
 		script := fmt.Sprintf(
 			`Start-Process "cmd.exe" -ArgumentList '/c %s' -Verb RunAs -WindowStyle Hidden`,
@@ -65,7 +65,7 @@ func (m *Manager) uninstall() error {
 	fmt.Println("uninstalling")
 	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
 	for _, shell := range []string{
-		fmt.Sprintf(`%s stop`, quotedPath),
+		// fmt.Sprintf(`%s stop`, quotedPath),
 		fmt.Sprintf(`%s uninstall`, quotedPath),
 	} {
 		script := fmt.Sprintf(
@@ -79,4 +79,14 @@ func (m *Manager) uninstall() error {
 		}
 	}
 	return nil
+}
+
+func (m *Manager) log() (string, error) {
+	script := fmt.Sprintf(`Get-EventLog -LogName Application -Source %s -Newest 1000`, m.serviceName)
+	cmd := exec.Command("powershell", "-Command", script)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to get logs: %v\n%s", err, string(output))
+	}
+	return string(output), nil
 }

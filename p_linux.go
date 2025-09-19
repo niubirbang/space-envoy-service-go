@@ -34,3 +34,7 @@ func (m *Manager) install() error {
 func (m *Manager) uninstall() error {
 	return nil
 }
+
+func (m *Manager) log() (string, error) {
+	return "", nil
+}

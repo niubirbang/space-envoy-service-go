@@ -82,7 +82,20 @@ func (m *Manager) Version() (string, error) {
 	return string(body), nil
 }
 
-func (m *Manager) Start(homeDir, configFile string) error {
+func (m *Manager) Status() (string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.checkUninit(); err != nil {
+		return "", err
+	}
+	body, err := m.request(http.MethodGet, "/status", nil, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
+func (m *Manager) Up(homeDir, configFile string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
@@ -94,19 +107,23 @@ func (m *Manager) Start(homeDir, configFile string) error {
 	if !filepath.IsAbs(configFile) {
 		configFile = filepath.Join(currentDir, configFile)
 	}
-	_, err := m.request(http.MethodPost, "/start", nil, map[string]interface{}{
+	_, err := m.request(http.MethodPost, "/up", nil, map[string]interface{}{
 		"homeDir":    homeDir,
 		"configFile": configFile,
 	})
 	return err
 }
 
-func (m *Manager) Stop() error {
+func (m *Manager) Down() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
 		return err
 	}
-	_, err := m.request(http.MethodPost, "/stop", nil, nil)
+	_, err := m.request(http.MethodPost, "/down", nil, nil)
 	return err
+}
+
+func (m *Manager) Log() (string, error) {
+	return m.log()
 }

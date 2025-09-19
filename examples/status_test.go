@@ -6,15 +6,14 @@ import (
 	service "github.com/niubirbang/space-envoy-service-go"
 )
 
-func TestStart(t *testing.T) {
+func TestStatus(t *testing.T) {
 	m := service.NewManager(serviceName, serviceFile)
 	if err := m.Init(); err != nil {
 		t.Fatal(err)
 	}
-	if err := m.Start(
-		homeDir,
-		configFile,
-	); err != nil {
+	status, err := m.Status()
+	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(status)
 }
