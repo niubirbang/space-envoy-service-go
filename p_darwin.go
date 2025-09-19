@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"path"
 	"regexp"
@@ -47,7 +48,7 @@ func (m *Manager) install() error {
 		[]string{
 			fmt.Sprintf(`chmod +x %s`, quotedPath),
 			fmt.Sprintf(`%s install`, quotedPath),
-			fmt.Sprintf(`%s start`, quotedPath),
+			// fmt.Sprintf(`%s start`, quotedPath),
 		},
 		"\n",
 	)
@@ -87,5 +88,9 @@ func (m *Manager) uninstall() error {
 }
 
 func (m *Manager) log() (string, error) {
-	return "", nil
+	body, err := os.ReadFile(fmt.Sprintf("/var/log/%s.out.log", m.serviceName))
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }
