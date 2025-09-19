@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"sync"
 )
 
@@ -122,6 +123,24 @@ func (m *Manager) Down() error {
 	}
 	_, err := m.request(http.MethodPost, "/down", nil, nil)
 	return err
+}
+
+func (m *Manager) Ping(target string, port uint16, timeout uint16) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.checkUninit(); err != nil {
+		return 0, err
+	}
+	body, err := m.request(http.MethodPost, "/ping", nil, map[string]interface{}{
+		"target":  target,
+		"port":    port,
+		"timeout": timeout,
+	})
+	delay, err := strconv.ParseInt(string(body), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return delay, nil
 }
 
 func (m *Manager) Log() (string, error) {
