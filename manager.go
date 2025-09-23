@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -112,6 +113,16 @@ func (m *Manager) Up(homeDir, configFile string) error {
 		"homeDir":    homeDir,
 		"configFile": configFile,
 	})
+	return err
+}
+
+func (m *Manager) Config(mode string, param interface{}) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.checkUninit(); err != nil {
+		return err
+	}
+	_, err := m.request(http.MethodPost, fmt.Sprintf("/config/%s", mode), nil, param)
 	return err
 }
 

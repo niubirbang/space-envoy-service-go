@@ -2,6 +2,6 @@ module github.com/niubirbang/space-envoy-service-go
 
 go 1.22.0
 
-require github.com/natefinch/npipe v0.0.0-20160621034901-c1b8fa8bdcce
+require github.com/Microsoft/go-winio v0.6.2
 
-require gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
+require golang.org/x/sys v0.10.0 // indirect

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/natefinch/npipe"
+	"github.com/Microsoft/go-winio"
 )
 
 func (m *Manager) initClient() {
@@ -23,7 +23,8 @@ func (m *Manager) initClient() {
 			if _, err := os.Stat(f); err != nil {
 				return nil, errors.New("pipe not found")
 			}
-			return npipe.Dial(f)
+			timeout := 5 * time.Second
+			return winio.DialPipe(f, &timeout)
 		},
 	}
 	m.client = &http.Client{
