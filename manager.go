@@ -24,7 +24,7 @@ func init() {
 }
 
 type (
-	CoreConfig struct {
+	Args struct {
 		Dir            string `json:"dir"`
 		LogLevel       string `json:"logLevel"`
 		MixedPort      uint16 `json:"mixedPort"`
@@ -77,7 +77,7 @@ func NewManager(serviceName, serviceFile string) *Manager {
 
 func (*GlobalParam) _Param()
 
-func (m *Manager) Init(dir, logLevel string, mixedPort, controllerPort, dnsPort uint16) error {
+func (m *Manager) Init() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.inited {
@@ -87,15 +87,6 @@ func (m *Manager) Init(dir, logLevel string, mixedPort, controllerPort, dnsPort 
 		if err := m.install(); err != nil {
 			return err
 		}
-	}
-	if _, err := m.request(http.MethodPost, "/init", nil, map[string]interface{}{
-		"dir":            dir,
-		"logLevel":       logLevel,
-		"mixedPort":      mixedPort,
-		"controllerPort": controllerPort,
-		"dnsPort":        dnsPort,
-	}); err != nil {
-		return err
 	}
 	m.inited = true
 	return nil
@@ -133,7 +124,7 @@ func (m *Manager) Status() (string, error) {
 	return string(body), nil
 }
 
-func (m *Manager) Args() (*CoreConfig, error) {
+func (m *Manager) Args() (*Args, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
@@ -143,7 +134,7 @@ func (m *Manager) Args() (*CoreConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	var args CoreConfig
+	var args Args
 	if err := json.Unmarshal(body, &args); err != nil {
 		return nil, err
 	}
