@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -23,6 +24,30 @@ func init() {
 }
 
 type (
+	CoreConfig struct {
+		Dir            string `json:"dir"`
+		LogLevel       string `json:"logLevel"`
+		MixedPort      uint16 `json:"mixedPort"`
+		ControllerPort uint16 `json:"controllerPort"`
+		DnsPort        uint16 `json:"dnsPort"`
+	}
+	Rules     []Rule
+	Rule      string
+	Proxies   []Proxy
+	Proxy     string
+	BaseParam struct {
+		TunEnable   bool    `json:"tunEnable" form:"tunEnable"`
+		DirectRules Rules   `json:"directRules" form:"directRules"`
+		ProxyRules  Rules   `json:"proxyRules" form:"proxyRules"`
+		RejectRules Rules   `json:"rejectRules" form:"rejectRules"`
+		Proxies     Proxies `json:"proxies" form:"proxies"`
+	}
+	GlobalParam struct {
+		BaseParam
+	}
+	Param interface {
+		_Param()
+	}
 	Manager struct {
 		mu          sync.Mutex
 		serviceName string
@@ -50,7 +75,9 @@ func NewManager(serviceName, serviceFile string) *Manager {
 	return m
 }
 
-func (m *Manager) Init() error {
+func (*GlobalParam) _Param()
+
+func (m *Manager) Init(dir, logLevel string, mixedPort, controllerPort, dnsPort uint16) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.inited {
@@ -60,6 +87,15 @@ func (m *Manager) Init() error {
 		if err := m.install(); err != nil {
 			return err
 		}
+	}
+	if _, err := m.request(http.MethodPost, "/init", nil, map[string]interface{}{
+		"dir":            dir,
+		"logLevel":       logLevel,
+		"mixedPort":      mixedPort,
+		"controllerPort": controllerPort,
+		"dnsPort":        dnsPort,
+	}); err != nil {
+		return err
 	}
 	m.inited = true
 	return nil
@@ -97,32 +133,40 @@ func (m *Manager) Status() (string, error) {
 	return string(body), nil
 }
 
-func (m *Manager) Up(homeDir, configFile string) error {
+func (m *Manager) Args() (*CoreConfig, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
-		return err
+		return nil, err
 	}
-	if !filepath.IsAbs(homeDir) {
-		homeDir = filepath.Join(currentDir, homeDir)
+	body, err := m.request(http.MethodGet, "/args", nil, nil)
+	if err != nil {
+		return nil, err
 	}
-	if !filepath.IsAbs(configFile) {
-		configFile = filepath.Join(currentDir, configFile)
+	var args CoreConfig
+	if err := json.Unmarshal(body, &args); err != nil {
+		return nil, err
 	}
-	_, err := m.request(http.MethodPost, "/up", nil, map[string]interface{}{
-		"homeDir":    homeDir,
-		"configFile": configFile,
-	})
-	return err
+	return &args, nil
 }
 
-func (m *Manager) Config(mode string, param interface{}) error {
+func (m *Manager) Config(mode string, param Param) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
 		return err
 	}
 	_, err := m.request(http.MethodPost, fmt.Sprintf("/config/%s", mode), nil, param)
+	return err
+}
+
+func (m *Manager) Up() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.checkUninit(); err != nil {
+		return err
+	}
+	_, err := m.request(http.MethodPost, "/up", nil, nil)
 	return err
 }
 
