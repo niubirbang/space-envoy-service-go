@@ -31,6 +31,13 @@ type (
 		ControllerPort uint16 `json:"controllerPort"`
 		DnsPort        uint16 `json:"dnsPort"`
 	}
+	URIInfo struct {
+		Name   string `json:"name"`
+		Type   string `json:"type"`
+		Server string `json:"server"`
+		Port   uint16 `json:"port"`
+		port   string
+	}
 	Rules     []Rule
 	Rule      string
 	Proxies   []Proxy
@@ -170,8 +177,28 @@ func (m *Manager) Down() error {
 	_, err := m.request(http.MethodPost, "/down", nil, nil)
 	return err
 }
-
+func (m *Manager) Parse(uri string) (*URIInfo, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.checkUninit(); err != nil {
+		return nil, err
+	}
+	body, err := m.request(http.MethodPost, "/parse", nil, map[string]interface{}{
+		"uri": uri,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var info URIInfo
+	if err := json.Unmarshal(body, &info); err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
 func (m *Manager) Ping(target string, port uint16, timeout uint16) (int64, error) {
+	if timeout == 0 {
+		timeout = 2000
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.checkUninit(); err != nil {
@@ -182,6 +209,9 @@ func (m *Manager) Ping(target string, port uint16, timeout uint16) (int64, error
 		"port":    port,
 		"timeout": timeout,
 	})
+	if err != nil {
+		return 0, err
+	}
 	delay, err := strconv.ParseInt(string(body), 10, 64)
 	if err != nil {
 		return 0, err
