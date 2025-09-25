@@ -36,7 +36,6 @@ type (
 		Type   string `json:"type"`
 		Server string `json:"server"`
 		Port   uint16 `json:"port"`
-		port   string
 	}
 	Rules     []Rule
 	Rule      string
