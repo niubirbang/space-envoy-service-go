@@ -82,7 +82,7 @@ func NewManager(serviceName, serviceFile string) *Manager {
 	return m
 }
 
-func (*GlobalParam) _Param()
+func (*GlobalParam) _Param() {}
 
 func (m *Manager) Init() error {
 	m.mu.Lock()
