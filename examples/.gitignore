@@ -1,9 +1,0 @@
-service
-service.exe
-service-darwin-amd64
-service-darwin-arm64
-service-linux-amd64
-service-linux-arm64
-service-windows-386.exe
-service-windows-amd64.exe
-service-windows-arm64.exe

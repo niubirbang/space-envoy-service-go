@@ -18,7 +18,7 @@ import (
 func (m *Manager) initClient() {
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", m.serviceName)))
+			return net.Dial("unix", path.Join("/tmp", fmt.Sprintf("%s.sock", m.serverName)))
 		},
 	}
 	m.client = &http.Client{
@@ -27,8 +27,8 @@ func (m *Manager) initClient() {
 	}
 }
 
-func (m *Manager) isRunning() bool {
-	cmd := exec.Command("launchctl", "print", fmt.Sprintf("system/%s", m.serviceName))
+func (m *Manager) getServerIsRunningByServer() bool {
+	cmd := exec.Command("launchctl", "print", fmt.Sprintf("system/%s", m.serverName))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false
@@ -42,32 +42,33 @@ func (m *Manager) isRunning() bool {
 }
 
 func (m *Manager) install() error {
-	fmt.Println("installing")
-	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
+	fmt.Println("[space-envoy] installing")
+
+	quotedPath := fmt.Sprintf(`"%s"`, m.serverFile)
 	shell := strings.Join(
 		[]string{
 			fmt.Sprintf(`chmod +x %s`, quotedPath),
 			fmt.Sprintf(`%s install`, quotedPath),
-			// fmt.Sprintf(`%s start`, quotedPath),
 		},
 		"\n",
 	)
 	script := fmt.Sprintf(
 		`do shell script "%s" with prompt "Kernel %s requires authorization to use" with administrator privileges`,
 		strings.ReplaceAll(shell, `"`, `\"`),
-		m.serviceName,
+		m.serverName,
 	)
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to install: %v\n%s", err, string(output))
 	}
-	return m.installAfterCheck()
+	return m.installServerAfterCheck()
 }
 
 func (m *Manager) uninstall() error {
-	fmt.Println("uninstalling")
-	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
+	fmt.Println("[space-envoy] uninstalling")
+
+	quotedPath := fmt.Sprintf(`"%s"`, m.serverName)
 	shell := strings.Join(
 		[]string{
 			fmt.Sprintf(`%s uninstall`, quotedPath),
@@ -75,9 +76,9 @@ func (m *Manager) uninstall() error {
 		"\n",
 	)
 	script := fmt.Sprintf(
-		`do shell script "%s" with prompt "Kernel %s requires authorization to use" with administrator privileges`,
+		`do shell script "%s" with prompt "Kernel %s requires authorization to uninstall" with administrator privileges`,
 		strings.ReplaceAll(shell, `"`, `\"`),
-		m.serviceName,
+		m.serverName,
 	)
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
@@ -88,7 +89,7 @@ func (m *Manager) uninstall() error {
 }
 
 func (m *Manager) log() (string, error) {
-	body, err := os.ReadFile(fmt.Sprintf("/var/log/%s.out.log", m.serviceName))
+	body, err := os.ReadFile(fmt.Sprintf("/var/log/%s.out.log", m.serverName))
 	if err != nil {
 		return "", err
 	}

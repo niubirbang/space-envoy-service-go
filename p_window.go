@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 func (m *Manager) initClient() {
 	transport := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			f := fmt.Sprintf(`\\.\pipe\%s`, m.serviceName)
+			f := fmt.Sprintf(`\\.\pipe\%s`, m.serverName)
 			if _, err := os.Stat(f); err != nil {
 				return nil, errors.New("pipe not found")
 			}
@@ -33,8 +34,8 @@ func (m *Manager) initClient() {
 	}
 }
 
-func (m *Manager) isRunning() bool {
-	cmd := exec.Command("sc", "query", m.serviceName)
+func (m *Manager) getServerIsRunningByServer() bool {
+	cmd := exec.Command("sc", "query", m.serverName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false
@@ -43,47 +44,43 @@ func (m *Manager) isRunning() bool {
 }
 
 func (m *Manager) install() error {
-	fmt.Println("installing")
-	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
-	for _, shell := range []string{
-		fmt.Sprintf(`%s install`, quotedPath),
-		// fmt.Sprintf(`%s start`, quotedPath),
-	} {
-		script := fmt.Sprintf(
-			`Start-Process "cmd.exe" -ArgumentList '/c %s' -Verb RunAs -WindowStyle Hidden`,
-			shell,
-		)
-		cmd := exec.Command("powershell", "-Command", script)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to install: %v\n%s", err, string(output))
-		}
+	fmt.Println("[space-envoy] installing")
+
+	ps1 := path.Join(os.TempDir(), "space_service_install.ps1")
+	if err := os.WriteFile(ps1, []byte(fmt.Sprintf(
+		"Start-Process -FilePath \"%s\" -ArgumentList \"install\" -Verb RunAs -Wait -WindowStyle Hidden",
+		m.serverFile,
+	)), os.ModePerm); err != nil {
+		return err
 	}
-	return m.installAfterCheck()
+	cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", fmt.Sprintf("\"%s\"", ps1))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to install: %v\n%s", err, string(output))
+	}
+	return m.installServerAfterCheck()
 }
 
 func (m *Manager) uninstall() error {
-	fmt.Println("uninstalling")
-	quotedPath := fmt.Sprintf(`"%s"`, m.serviceFile)
-	for _, shell := range []string{
-		// fmt.Sprintf(`%s stop`, quotedPath),
-		fmt.Sprintf(`%s uninstall`, quotedPath),
-	} {
-		script := fmt.Sprintf(
-			`Start-Process "cmd.exe" -ArgumentList '/c %s' -Verb RunAs -WindowStyle Hidden`,
-			shell,
-		)
-		cmd := exec.Command("powershell", "-Command", script)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("failed to install: %v\n%s", err, string(output))
-		}
+	fmt.Println("[space-envoy] uninstalling")
+
+	ps1 := path.Join(os.TempDir(), "space_service_uninstall.ps1")
+	if err := os.WriteFile(ps1, []byte(fmt.Sprintf(
+		"Start-Process -FilePath \"%s\" -ArgumentList \"uninstall\" -Verb RunAs -Wait -WindowStyle Hidden",
+		m.serverFile,
+	)), os.ModePerm); err != nil {
+		return err
+	}
+	cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-File", fmt.Sprintf("\"%s\"", ps1))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to uninstall: %v\n%s", err, string(output))
 	}
 	return nil
 }
 
 func (m *Manager) log() (string, error) {
-	script := fmt.Sprintf(`Get-EventLog -LogName Application -Source %s -Newest 1000`, m.serviceName)
+	script := fmt.Sprintf(`Get-EventLog -LogName Application -Source %s -Newest 1000`, m.serverName)
 	cmd := exec.Command("powershell", "-Command", script)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 func (m *Manager) request(
@@ -42,26 +41,4 @@ func (m *Manager) request(
 		return body, nil
 	}
 	return nil, errors.New(string(body))
-}
-
-func (m *Manager) checkUninit() error {
-	if !m.inited {
-		return errors.New("uninit")
-	}
-	return nil
-}
-
-func (m *Manager) installAfterCheck() error {
-	var ok bool
-	for i := 0; i < 60; i++ {
-		time.Sleep(500 * time.Millisecond)
-		if m.isRunning() {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return errors.New("service failed to start")
-	}
-	return nil
 }
