@@ -1,4 +1,4 @@
-module github.com/niubirbang/space-envoy-service-go
+module github.com/niubirbang/space-envoy-service-go/v2
 
 go 1.22.0
 
