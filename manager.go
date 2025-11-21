@@ -86,10 +86,20 @@ func NewManager(serverName, serverDir string) *Manager {
 		serverInstaller: path.Join(serverDir, "service.zip"),
 		serverFile:      path.Join(serverDir, serverFileName),
 	}
+	if _, err := os.Stat(m.serverInstaller); err == nil {
+		m.serverInstallerExists = true
+	}
+	if _, err := os.Stat(m.serverFile); err == nil {
+		m.serverFileExists = true
+	}
 	m.initClient()
 	m.intervalRefreshState()
 	m.listenServerIsRunningByClient()
 	return m
+}
+
+func (m *Manager) GetServerIsRunningByServer() bool {
+	return m.getServerIsRunningByServer()
 }
 
 func (m *Manager) Download(downloadFunc func(serverInstaller string) error) error {
@@ -215,7 +225,7 @@ func (m *Manager) setServerInstallerExists(exists bool) {
 	defer m.mu.Unlock()
 	m.serverInstallerExists = exists
 }
-func (m *Manager) getServerInstallerExists() bool {
+func (m *Manager) GetServerInstallerExists() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.serverInstallerExists
@@ -225,7 +235,7 @@ func (m *Manager) setServerFileExists(exists bool) {
 	defer m.mu.Unlock()
 	m.serverFileExists = exists
 }
-func (m *Manager) getServerFileExists() bool {
+func (m *Manager) GetServerFileExists() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.serverFileExists
@@ -235,7 +245,7 @@ func (m *Manager) setServerIsRunning(isRunning bool) {
 	defer m.mu.Unlock()
 	m.serverIsRunning = isRunning
 }
-func (m *Manager) getServerIsRunning() bool {
+func (m *Manager) GetServerIsRunning() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.serverIsRunning
@@ -252,7 +262,7 @@ func (m *Manager) getStateListeners() []func(State) {
 }
 
 func (m *Manager) check() error {
-	if !m.getServerIsRunning() {
+	if !m.GetServerIsRunning() {
 		return errors.New("server_not_run")
 	}
 	return nil
@@ -260,9 +270,9 @@ func (m *Manager) check() error {
 
 func (m *Manager) notifyState() {
 	state := State{
-		ServerInstallerExists: m.getServerInstallerExists(),
-		ServerFileExists:      m.getServerFileExists(),
-		ServerIsRunning:       m.getServerIsRunning(),
+		ServerInstallerExists: m.GetServerInstallerExists(),
+		ServerFileExists:      m.GetServerFileExists(),
+		ServerIsRunning:       m.GetServerIsRunning(),
 	}
 	for _, cb := range m.getStateListeners() {
 		go cb(state)
@@ -281,15 +291,15 @@ func (m *Manager) refreshState() {
 	}
 	serverIsRunning = m.getServerIsRunningByServer()
 
-	if m.getServerInstallerExists() != serverInstallerExists {
+	if m.GetServerInstallerExists() != serverInstallerExists {
 		m.setServerInstallerExists(serverInstallerExists)
 		notify = true
 	}
-	if m.getServerFileExists() != serverFileExists {
+	if m.GetServerFileExists() != serverFileExists {
 		m.setServerFileExists(serverFileExists)
 		notify = true
 	}
-	if m.getServerIsRunning() != serverIsRunning {
+	if m.GetServerIsRunning() != serverIsRunning {
 		m.setServerIsRunning(serverIsRunning)
 		notify = true
 	}
