@@ -150,7 +150,9 @@ func (m *Manager) Version() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(body), nil
+	var data string
+	err = json.Unmarshal(body, &data)
+	return data, err
 }
 
 func (m *Manager) Option() (*Option, error) {
