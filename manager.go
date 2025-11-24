@@ -14,6 +14,13 @@ import (
 const (
 	StatusEnable  Status = "enable"
 	StatusDisable Status = "disable"
+
+	UseFixed Use = "fixed"
+	UseAuto  Use = "auto"
+
+	ModeGlobal    = "global"
+	ModeAbroad    = "abroad"
+	ModeReturning = "returning"
 )
 
 var (
@@ -51,13 +58,15 @@ type (
 		Port   uint16 `json:"port"`
 	}
 	Status  string
+	Use     string
+	Mode    string
 	Rules   []Rule
 	Rule    string
 	Proxies []Proxy
 	Proxy   string
 	Param   struct {
-		Mode        string  `json:"mode"`
-		Use         string  `json:"use"`
+		Mode        Mode    `json:"mode"`
+		Use         Use     `json:"use"`
 		DirectRules Rules   `json:"directRules"`
 		ProxyRules  Rules   `json:"proxyRules"`
 		RejectRules Rules   `json:"rejectRules"`
