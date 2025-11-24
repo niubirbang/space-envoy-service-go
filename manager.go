@@ -18,13 +18,26 @@ const (
 	UseFixed Use = "fixed"
 	UseAuto  Use = "auto"
 
-	ModeGlobal    = "global"
-	ModeAbroad    = "abroad"
-	ModeReturning = "returning"
+	ModeGlobal    Mode = "global"
+	ModeAbroad    Mode = "abroad"
+	ModeReturning Mode = "returning"
 )
 
 var (
 	serverFileName string
+	StatusAll      = map[Status]bool{
+		StatusEnable:  true,
+		StatusDisable: true,
+	}
+	UseAll = map[Use]bool{
+		UseFixed: true,
+		UseAuto:  true,
+	}
+	ModeAll = map[Mode]bool{
+		ModeGlobal:    true,
+		ModeAbroad:    true,
+		ModeReturning: true,
+	}
 )
 
 func init() {
